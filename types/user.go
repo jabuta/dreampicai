@@ -5,6 +5,6 @@ type contextKeyType string
 const UserContextKey contextKeyType = "user"
 
 type AuthenticatedUser struct {
-	Email      string
-	IsLoggedIn bool
+	Email    string
+	LoggedIn bool
 }

@@ -1,5 +1,10 @@
 package ui
 
+import (
+
+    "github.com/jabuta/dreampicai/view"
+
+)
 templ Navigation() {
     <div class="navbar bg-base-100 border-b border-gray-700">
         <div class="navbar-start">
@@ -37,7 +42,20 @@ templ Navigation() {
             </ul>
         </div>
         <div class="navbar-end">
-            <a class="btn">Button</a>
+            if view.AuthenticatedUser(ctx).LoggedIn {
+                <div class="dropdown dropdown-end">
+                <div tabindex="0" class="m-1 btn">
+                    {view.AuthenticatedUser(ctx).Email}
+                </div> 
+                <ul tabindex="0" class="p-2 shadow menu dropdown-content bg-base-100 rounded-box w-52">
+                    <li><a>Settings</a></li>
+                    <li><a>Log Out</a></li>
+                </ul>
+                </div>
+            } else {
+                <a class="btn btn-primary">Log In</a>
+            }
+            
         </div>
     </div>
 }
