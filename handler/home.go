@@ -1,7 +1,11 @@
 package handler
 
-import "net/http"
+import (
+	"net/http"
 
-func HandleHomeIndex(w http.ResponseWriter, r *http.Request) {
-	home.Index.Render(r.ContentLength)
+	"github.com/jabuta/dreampicai/view/home"
+)
+
+func HandleHomeIndex(w http.ResponseWriter, r *http.Request) error {
+	return home.Index().Render(r.Context(), w)
 }

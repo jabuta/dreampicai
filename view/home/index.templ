@@ -1,5 +1,9 @@
 package home
 
+import "github.com/jabuta/dreampicai/view/layout"
+
 templ Index() {
-    <div>hello from homepage</div>
+    @layout.App(true){
+        <div>hello from homepage</div>
+    }
 }
