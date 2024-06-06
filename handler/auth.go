@@ -12,8 +12,32 @@ import (
 	"github.com/nedpals/supabase-go"
 )
 
-func render(r *http.Request, w http.ResponseWriter, component templ.Component) error {
-	return component.Render(r.Context(), w)
+func HandleSignupIndex(w http.ResponseWriter, r *http.Request) error {
+	return auth.Signup().Render(r.Context(), w)
+}
+
+func HandleSignupCreate(w http.ResponseWriter, r *http.Request) error {
+	params := auth.SignupParams{
+		Email:           r.FormValue("email"),
+		Password:        r.FormValue("password"),
+		ConfirmPassword: r.FormValue("confirmPassword"),
+	}
+	signupErrors := auth.SignupErrors{}
+	if !util.IsValidEmail(params.Email) {
+		signupErrors.Email = "Enter a Valid Email"
+	}
+	if reason, ok := util.ValidatePassword(params.Password); !ok {
+		signupErrors.Password = reason
+	}
+	if params.Password != params.ConfirmPassword {
+		signupErrors.ConfirmPassword = "Passwords do not match"
+	}
+	if len(signupErrors.Email+signupErrors.Password+signupErrors.ConfirmPassword) > 0 {
+		fmt.Println("pritning the error")
+		return render(r, w, auth.SignupForm(params, signupErrors))
+	}
+
+	return nil
 }
 
 func HandleLogInIndex(w http.ResponseWriter, r *http.Request) error {
@@ -24,16 +48,6 @@ func HandleLogInCreate(w http.ResponseWriter, r *http.Request) error {
 	credentials := supabase.UserCredentials{
 		Email:    r.FormValue("email"),
 		Password: r.FormValue("password"),
-	}
-	loginErrors := auth.LoginErrors{}
-	if !util.IsValidEmail(credentials.Email) {
-		loginErrors.Email = "Enter a Valid Email"
-	}
-	// if reason, ok := util.ValidatePassword(credentials.Password); !ok {
-	// 	loginErrors.Password = reason
-	// }
-	if len(loginErrors.Email+loginErrors.Password) > 0 {
-		return render(r, w, auth.LoginForm(credentials, loginErrors))
 	}
 
 	resp, err := sb.Client.Auth.SignIn(r.Context(), credentials)
@@ -56,4 +70,8 @@ func HandleLogInCreate(w http.ResponseWriter, r *http.Request) error {
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 	fmt.Println(credentials)
 	return nil
+}
+
+func render(r *http.Request, w http.ResponseWriter, component templ.Component) error {
+	return component.Render(r.Context(), w)
 }
