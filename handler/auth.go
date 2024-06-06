@@ -23,21 +23,39 @@ func HandleSignupCreate(w http.ResponseWriter, r *http.Request) error {
 		ConfirmPassword: r.FormValue("confirmPassword"),
 	}
 	signupErrors := auth.SignupErrors{}
-	if !util.IsValidEmail(params.Email) {
-		signupErrors.Email = "Enter a Valid Email"
-	}
-	if reason, ok := util.ValidatePassword(params.Password); !ok {
-		signupErrors.Password = reason
-	}
-	if params.Password != params.ConfirmPassword {
-		signupErrors.ConfirmPassword = "Passwords do not match"
-	}
-	if len(signupErrors.Email+signupErrors.Password+signupErrors.ConfirmPassword) > 0 {
+	if ok := util.New(params, util.Fields{
+		"Email":           util.Rules(util.Min(2), util.Max(50)),
+		"Password":        util.Rules(util.Password),
+		"ConfirmPassword": util.Rules(util.Equal(params.Password)),
+	}).Validate(&signupErrors); !ok {
 		fmt.Println("pritning the error")
 		return render(r, w, auth.SignupForm(params, signupErrors))
 	}
 
-	return nil
+	// if !util.IsValidEmail(params.Email) {
+	// 	signupErrors.Email = "Enter a Valid Email"
+	// }
+	// if reason, ok := util.ValidatePassword(params.Password); !ok {
+	// 	signupErrors.Password = reason
+	// }
+	// if params.Password != params.ConfirmPassword {
+	// 	signupErrors.ConfirmPassword = "Passwords do not match"
+	// }
+	// if len(signupErrors.Email+signupErrors.Password+signupErrors.ConfirmPassword) > 0 {
+	// 	fmt.Println("pritning the error")
+	// 	return render(r, w, auth.SignupForm(params, signupErrors))
+	// }
+
+	sbuser, err := sb.Client.Auth.SignUp(r.Context(), supabase.UserCredentials{
+		Email:    params.Email,
+		Password: params.Password,
+	})
+	if err != nil {
+		render(r, w, auth.SignupResponse(sbuser.Email, true))
+		return err
+	}
+
+	return render(r, w, auth.SignupResponse(sbuser.Email, false))
 }
 
 func HandleLogInIndex(w http.ResponseWriter, r *http.Request) error {

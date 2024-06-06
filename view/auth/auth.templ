@@ -4,9 +4,10 @@ import (
 	"github.com/jabuta/dreampicai/view/layout"
 	"github.com/nedpals/supabase-go"
 )
+
 type LoginErrors struct {
-	Email string
-	Password string
+	Email              string
+	Password           string
 	InvalidCredentials string
 }
 
@@ -15,11 +16,11 @@ templ LogIn() {
 		<div class="hero min-h-screen bg-base-200">
 			<div class="hero-content flex-col lg:flex-row-reverse">
 				<div class="text-center lg:text-left">
-				<h1 class="text-5xl font-bold">Login to dreampicai</h1>
-				<p class="py-6">We da best catfish providers</p>
+					<h1 class="text-5xl font-bold">Login to dreampicai</h1>
+					<p class="py-6">We da best catfish providers</p>
 				</div>
 				<div class="card shrink-0 w-full max-w-sm shadow-2xl bg-base-100">
-				@LoginForm(supabase.UserCredentials{}, LoginErrors{})
+					@LoginForm(supabase.UserCredentials{}, LoginErrors{})
 				</div>
 			</div>
 		</div>
@@ -28,35 +29,36 @@ templ LogIn() {
 
 templ LoginForm(creds supabase.UserCredentials, errors LoginErrors) {
 	<form
-	hx-post="/login"
-	hx-swap="outerHTML"
-	class="card-body">
+		hx-post="/login"
+		hx-swap="outerHTML"
+		class="card-body"
+	>
 		<div class="form-control">
-		<label class="label">
-			<span class="label-text">Email</span>
-		</label>
-		<input type="email" name="email" value={creds.Email} placeholder="email" class="input input-bordered" required />
+			<label class="label">
+				<span class="label-text">Email</span>
+			</label>
+			<input type="email" name="email" value={ creds.Email } placeholder="email" class="input input-bordered" required/>
 		</div>
 		if len(errors.Email) > 0 {
-			<div class="text-sm text-error">{errors.Email}</div>
+			<div class="text-sm text-error">{ errors.Email }</div>
 		}
 		<div class="form-control">
-		<label class="label">
-			<span class="label-text">Password</span>
-		</label>
-		<input type="password" name="password" placeholder="password" class="input input-bordered" required />
-		if len(errors.Password) > 0 {
-			<div class="text-sm text-error">{errors.Password}</div>
-		}
-		<label class="label">
-			<a href="#" class="label-text-alt link link-hover">Forgot password?</a>
-		</label>
+			<label class="label">
+				<span class="label-text">Password</span>
+			</label>
+			<input type="password" name="password" placeholder="password" class="input input-bordered" required/>
+			if len(errors.Password) > 0 {
+				<div class="text-sm text-error">{ errors.Password }</div>
+			}
+			<label class="label">
+				<a href="#" class="label-text-alt link link-hover">Forgot password?</a>
+			</label>
 		</div>
 		if len(errors.InvalidCredentials) > 0 {
-			<div class="text-sm text-error">{errors.InvalidCredentials}</div>
+			<div class="text-sm text-error">{ errors.InvalidCredentials }</div>
 		}
 		<div class="form-control mt-6">
-		<button class="btn btn-primary">Login</button>
+			<button class="btn btn-primary">Login</button>
 		</div>
 	</form>
 }
@@ -66,11 +68,11 @@ templ Signup() {
 		<div class="hero min-h-screen bg-base-200">
 			<div class="hero-content flex-col lg:flex-row-reverse">
 				<div class="text-center lg:text-left">
-				<h1 class="text-5xl font-bold">Signup to dreampicai</h1>
-				<p class="py-6">We da best catfish providers</p>
+					<h1 class="text-5xl font-bold">Signup to dreampicai</h1>
+					<p class="py-6">We da best catfish providers</p>
 				</div>
 				<div class="card shrink-0 w-full max-w-sm shadow-2xl bg-base-100">
-				@SignupForm(SignupParams{}, SignupErrors{})
+					@SignupForm(SignupParams{}, SignupErrors{})
 				</div>
 			</div>
 		</div>
@@ -78,49 +80,66 @@ templ Signup() {
 }
 
 type SignupParams struct {
-	Email string
-	Password string
+	Email           string
+	Password        string
 	ConfirmPassword string
 }
 
 type SignupErrors struct {
-	Email string
-	Password string
+	Email           string
+	Password        string
 	ConfirmPassword string
 }
 
 templ SignupForm(params SignupParams, errors SignupErrors) {
 	<form
-	hx-post="/signup"
-	hx-swap="outerHTML"
-	class="card-body">
+		hx-post="/signup"
+		hx-swap="outerHTML"
+		class="card-body"
+	>
 		<div class="form-control">
-		<label class="label">
-			<span class="label-text">Email</span>
-		</label>
-		<input type="email" name="email" value={params.Email} placeholder="email" class="input input-bordered" required />
+			<label class="label">
+				<span class="label-text">Email</span>
+			</label>
+			<input type="email" name="email" value={ params.Email } placeholder="email" class="input input-bordered" required/>
+			if len(errors.Email) > 0 {
+				<div class="text-sm text-error">{ errors.Email }</div>
+			}
 		</div>
-		if len(errors.Email) > 0 {
-			<div class="text-sm text-error">{errors.Email}</div>
-		}
 		<div class="form-control">
-		<label class="label">
-			<span class="label-text">Password</span>
-		</label>
-		<input type="password" name="password" placeholder="password" class="input input-bordered" required />
-		if len(errors.Password) > 0 {
-			<div class="text-sm text-error">{errors.Password}</div>
-		}
-		// <label class="label">
-		// 	<span class="label-text">Confirm Password</span>
-		// </label>
-		<input type="password" name="confirmPassword" placeholder="confirm your password" class="input input-bordered" required />
-		if len(errors.ConfirmPassword) > 0 {
-			<div class="text-sm text-error">{errors.ConfirmPassword}</div>
-		}
+			<label class="label">
+				<span class="label-text">Password</span>
+			</label>
+			<input type="password" name="password" placeholder="password" class="input input-bordered" required/>
+			if len(errors.Password) > 0 {
+				<div class="text-sm text-error">{ errors.Password }</div>
+			}
+		</div>
+		<div class="form-control">
+			// <label class="label">
+			// 	<span class="label-text">Confirm Password</span>
+			// </label>
+			<input type="password" name="confirmPassword" placeholder="confirm your password" class="input input-bordered" required/>
+			if len(errors.ConfirmPassword) > 0 {
+				<div class="text-sm text-error">{ errors.ConfirmPassword }</div>
+			}
 		</div>
 		<div class="form-control mt-6">
-		<button class="btn btn-primary">Sign Up</button>
+			<button class="btn btn-primary">Sign Up</button>
 		</div>
 	</form>
+}
+
+templ SignupResponse(email string, issue bool) {
+	if issue {
+		<div class="card-body bg-error">
+			<h2 class="card-title">Sign Up Failed for { email }</h2>
+			<p>Please try agian</p>
+		</div>
+	} else {
+		<div class="card-body">
+			<h2 class="card-title">Sign Up Successful</h2>
+			<p>A confiormation email has been sent to: <span class="bg-success">{ email }</span></p>
+		</div>
+	}
 }
