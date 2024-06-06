@@ -35,19 +35,25 @@ templ LoginForm(creds supabase.UserCredentials, errors LoginErrors) {
 		<label class="label">
 			<span class="label-text">Email</span>
 		</label>
-		<input type="email" placeholder="email" class="input input-bordered" value={creds.Email} required />
+		<input type="email" name="email" value={creds.Email} placeholder="email" class="input input-bordered" required />
 		</div>
+		if len(errors.Email) > 0 {
+			<div class="text-sm text-error">{errors.Email}</div>
+		}
 		<div class="form-control">
 		<label class="label">
 			<span class="label-text">Password</span>
 		</label>
-		<input type="password" placeholder="password" class="input input-bordered" required />
+		<input type="password" name="password" placeholder="password" class="input input-bordered" required />
+		if len(errors.Password) > 0 {
+			<div class="text-sm text-error">{errors.Password}</div>
+		}
 		<label class="label">
 			<a href="#" class="label-text-alt link link-hover">Forgot password?</a>
 		</label>
 		</div>
 		if len(errors.InvalidCredentials) > 0 {
-		<div class="label-text-alt text-error">{errors.InvalidCredentials}</div>
+			<div class="text-sm text-error">{errors.InvalidCredentials}</div>
 		}
 		<div class="form-control mt-6">
 		<button class="btn btn-primary">Login</button>

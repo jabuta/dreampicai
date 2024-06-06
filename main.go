@@ -9,7 +9,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/jabuta/dreampicai/handler"
-	sb "github.com/jabuta/dreampicai/pkg/supabase"
+	"github.com/jabuta/dreampicai/pkg/sb"
 
 	"github.com/joho/godotenv"
 )

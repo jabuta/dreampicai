@@ -17,7 +17,7 @@ func WithAuth(next http.Handler) http.Handler {
 		}
 		user := types.AuthenticatedUser{}
 		ctx := context.WithValue(r.Context(), types.UserContextKey, user)
-		fmt.Println("from the with user middleware")
+		fmt.Println("from the WithAuth middleware")
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 
