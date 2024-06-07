@@ -1,4 +1,4 @@
-package util
+package validate
 
 import (
 	"fmt"
@@ -118,7 +118,7 @@ func Equal(s string) RuleFunc {
 				return str == s
 			},
 			MessageFunc: func(set RuleSet) string {
-				return fmt.Sprintf("%s should be equal %s", set.FieldName, s)
+				return "Paswords don't match"
 			},
 		}
 	}

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/jabuta/dreampicai/pkg/sb"
 	"github.com/jabuta/dreampicai/types"
 )
 
@@ -15,8 +16,21 @@ func WithAuth(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 			return
 		}
-		user := types.AuthenticatedUser{}
-		ctx := context.WithValue(r.Context(), types.UserContextKey, user)
+		accessToken, err := r.Cookie("at")
+		if err != nil {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		sbUser, err := sb.Client.Auth.User(r.Context(), accessToken.Value)
+		if err != nil {
+			next.ServeHTTP(w, r)
+			return
+		}
+		ctx := context.WithValue(r.Context(), types.UserContextKey, types.AuthenticatedUser{
+			Email:    sbUser.Email,
+			LoggedIn: true,
+		})
 		fmt.Println("from the WithAuth middleware")
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

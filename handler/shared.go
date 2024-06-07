@@ -7,6 +7,16 @@ import (
 	"github.com/jabuta/dreampicai/types"
 )
 
+func hxRedirect(w http.ResponseWriter, r *http.Request, to string) error {
+	if len(r.Header.Get("HX-request")) > 0 {
+		w.Header().Set("HX-redirect", to)
+		w.WriteHeader(http.StatusSeeOther)
+		return nil
+	}
+	http.Redirect(w, r, to, http.StatusSeeOther)
+	return nil
+}
+
 func getAuthenticateUser(r *http.Request) types.AuthenticatedUser {
 	user, ok := r.Context().Value(types.UserContextKey).(types.AuthenticatedUser)
 	if !ok {

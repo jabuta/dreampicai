@@ -49,7 +49,11 @@ templ Navigation() {
                 </div> 
                 <ul tabindex="0" class="p-2 shadow menu dropdown-content bg-base-100 rounded-box w-52">
                     <li><a>Settings</a></li>
-                    <li><a>Log Out</a></li>
+                    <li>
+                        <form action="/log-out" method="post">
+                            <button type="submit" class="bg-transparent border-none p-0 m-0 align-baseline">Log Out</button>
+                        </form>
+                    </li>
                 </ul>
                 </div>
             } else {

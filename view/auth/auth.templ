@@ -143,3 +143,11 @@ templ SignupResponse(email string, issue bool) {
 		</div>
 	}
 }
+
+templ CallbackScript() {
+	<script>
+		var url = window.location.href;
+		var newUrl = url.replace("#","?")
+		window.location = newUrl
+	</script>
+}
