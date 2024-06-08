@@ -104,7 +104,25 @@ func HandleLogInCreate(w http.ResponseWriter, r *http.Request) error {
 
 	setAuthCookie(resp.AccessToken, w)
 	fmt.Println(credentials)
-	return hxRedirect(w, r, "/")
+	redirectCookie, err := r.Cookie("lrd")
+	if err != nil {
+		return hxRedirect(w, r, "/")
+	}
+	redirectCookie.MaxAge = -1
+	http.SetCookie(w, redirectCookie)
+	return hxRedirect(w, r, redirectCookie.Value)
+}
+
+func HandleLogInWithGoogle(w http.ResponseWriter, r *http.Request) error {
+	resp, err := sb.Client.Auth.SignInWithProvider(supabase.ProviderSignInOptions{
+		Provider:   "google",
+		RedirectTo: "http://localhost:3000/auth/callback",
+	})
+	if err != nil {
+		return err
+	}
+	http.Redirect(w, r, resp.URL, http.StatusSeeOther)
+	return nil
 }
 
 func HandleAuthCallback(w http.ResponseWriter, r *http.Request) error {

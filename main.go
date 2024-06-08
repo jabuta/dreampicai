@@ -23,16 +23,22 @@ func main() {
 	}
 
 	router := chi.NewMux()
-	router.Use(handler.WithAuth)
+	router.Use(handler.WithUser)
 	// router.Get("/path",handler)
 	router.Handle("/*", http.StripPrefix("/", http.FileServer(http.FS(FS))))
 	router.Get("/", handler.MakeHandler(handler.HandleHomeIndex))
 	router.Get("/login", handler.MakeHandler(handler.HandleLogInIndex))
+	router.Get("/login/provider/google", handler.MakeHandler(handler.HandleLogInWithGoogle))
 	router.Post("/login", handler.MakeHandler(handler.HandleLogInCreate))
 	router.Get("/signup", handler.MakeHandler(handler.HandleSignupIndex))
 	router.Post("/signup", handler.MakeHandler(handler.HandleSignupCreate))
 	router.Get("/auth/callback", handler.MakeHandler(handler.HandleAuthCallback))
 	router.Post("/log-out", handler.MakeHandler(handler.HandleLogoutCreate))
+
+	router.Group(func(auth chi.Router) {
+		auth.Use(handler.WithAuth)
+		auth.Get("/settings", handler.MakeHandler(handler.HandleSettingsIndex))
+	})
 
 	port := os.Getenv("HTTP_LISTEN_ADDR")
 	slog.Info("application running", "port", port)
