@@ -46,13 +46,19 @@ func WithUser(next http.Handler) http.Handler {
 			return
 		}
 
-		sbUser, err := sb.Client.Auth.User(r.Context(), accessToken.Value)
+		sbUserClaims, err := sb.DecodeSBJWT(accessToken.Value)
 		if err != nil {
 			next.ServeHTTP(w, r)
 			return
 		}
+		sbUser, ok := sbUserClaims["email"].(string)
+		if !ok {
+			next.ServeHTTP(w, r)
+			return
+		}
+
 		ctx := context.WithValue(r.Context(), types.UserContextKey, types.AuthenticatedUser{
-			Email:    sbUser.Email,
+			Email:    sbUser,
 			LoggedIn: true,
 		})
 		fmt.Println("from the WithUser middleware")
