@@ -33,6 +33,7 @@ func main() {
 	router.Get("/signup", handler.MakeHandler(handler.HandleSignupIndex))
 	router.Post("/signup", handler.MakeHandler(handler.HandleSignupCreate))
 	router.Get("/auth/callback", handler.MakeHandler(handler.HandleAuthCallback))
+	router.Get("/auth/callback/pkce", handler.MakeHandler(handler.HandleAuthCallbackPKCE))
 	router.Post("/log-out", handler.MakeHandler(handler.HandleLogoutCreate))
 
 	router.Group(func(auth chi.Router) {

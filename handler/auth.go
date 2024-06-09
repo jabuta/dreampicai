@@ -1,8 +1,10 @@
 package handler
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/a-h/templ"
 	"github.com/jabuta/dreampicai/pkg/sb"
@@ -102,7 +104,7 @@ func HandleLogInCreate(w http.ResponseWriter, r *http.Request) error {
 		}))
 	}
 
-	setAuthCookie(resp.AccessToken, w)
+	setAuthCookie(w, resp.AccessToken, resp.ExpiresIn, time.Now().Add(1*time.Hour))
 	fmt.Println(credentials)
 	redirectCookie, err := r.Cookie("lrd")
 	if err != nil {
@@ -116,11 +118,13 @@ func HandleLogInCreate(w http.ResponseWriter, r *http.Request) error {
 func HandleLogInWithGoogle(w http.ResponseWriter, r *http.Request) error {
 	resp, err := sb.Client.Auth.SignInWithProvider(supabase.ProviderSignInOptions{
 		Provider:   "google",
-		RedirectTo: "http://localhost:3000/auth/callback",
+		RedirectTo: "http://localhost:3000/auth/callback/pkce",
+		FlowType:   supabase.PKCE,
 	})
 	if err != nil {
 		return err
 	}
+	setVerifierCookie(w, resp.CodeVerifier)
 	http.Redirect(w, r, resp.URL, http.StatusSeeOther)
 	return nil
 }
@@ -130,7 +134,37 @@ func HandleAuthCallback(w http.ResponseWriter, r *http.Request) error {
 	if len(accessToken) == 0 {
 		return render(r, w, auth.CallbackScript())
 	}
-	setAuthCookie(accessToken, w)
+	accessInfo, err := sb.DecodeSBJWT(accessToken)
+	if err != nil {
+		return err
+	}
+	expiration, err := accessInfo.GetExpirationTime()
+	if err != nil {
+		return err
+	}
+	setAuthCookie(w, accessToken, 3600, expiration.Time)
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+	return nil
+}
+
+func HandleAuthCallbackPKCE(w http.ResponseWriter, r *http.Request) error {
+	authCode := r.URL.Query().Get("code")
+	if len(authCode) == 0 {
+		return errors.New("no code to parse")
+	}
+	codeVerifier, err := r.Cookie("cv")
+	if err != nil {
+		return err
+	}
+	accessToken, err := sb.Client.Auth.ExchangeCode(r.Context(), supabase.ExchangeCodeOpts{
+		AuthCode:     authCode,
+		CodeVerifier: codeVerifier.Value,
+	})
+	if err != nil {
+		return err
+	}
+
+	setAuthCookie(w, accessToken.AccessToken, accessToken.ExpiresIn, time.Now().Add(1*time.Hour))
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 	return nil
 }
@@ -139,13 +173,28 @@ func render(r *http.Request, w http.ResponseWriter, component templ.Component) e
 	return component.Render(r.Context(), w)
 }
 
-func setAuthCookie(accessToken string, w http.ResponseWriter) {
+func setAuthCookie(w http.ResponseWriter, accessToken string, maxAge int, expires time.Time) {
+
 	cookie := &http.Cookie{
 		Value:    accessToken,
 		Name:     "at",
 		Path:     "/",
 		HttpOnly: true,
 		Secure:   true,
+		MaxAge:   maxAge,
+		Expires:  expires,
+	}
+	http.SetCookie(w, cookie)
+}
+
+func setVerifierCookie(w http.ResponseWriter, codeVerifier string) {
+	cookie := &http.Cookie{
+		Value:    codeVerifier,
+		Name:     "cv",
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   true,
+		MaxAge:   60,
 	}
 	http.SetCookie(w, cookie)
 }
