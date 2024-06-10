@@ -134,14 +134,17 @@ func HandleAuthCallback(w http.ResponseWriter, r *http.Request) error {
 	if len(accessToken) == 0 {
 		return render(r, w, auth.CallbackScript())
 	}
-	accessInfo, err := sb.DecodeSBJWT(accessToken)
+	accessInfo, err := sb.GetUserClaims(accessToken)
 	if err != nil {
 		return err
 	}
+	fmt.Println(accessToken)
+
 	expiration, err := accessInfo.GetExpirationTime()
 	if err != nil {
 		return err
 	}
+	fmt.Printf("%s type - %T", expiration, expiration)
 	setAuthCookie(w, accessToken, 3600, expiration.Time)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 	return nil

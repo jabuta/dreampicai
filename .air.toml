@@ -3,17 +3,17 @@ tmp_dir = "tmp"
 
 [build]
   bin = "./tmp/main"
-  cmd = "templ generate && npx tailwindcss -i view/css/app.css -o public/styles.css && go build -tags dev -o ./tmp/main ."
+  cmd = "sqlc generate && templ generate && npx tailwindcss -i view/css/app.css -o public/styles.css && go build -tags dev -o ./tmp/main ."
 	
   delay = 20
-  exclude_dir = ["assets", "tmp", "vendor"]
+  exclude_dir = ["assets", "tmp", "vendor", "pkg/database"]
   exclude_file = []
   exclude_regex = [".*_templ.go"]
   exclude_unchanged = false
   follow_symlink = false
   full_bin = ""
   include_dir = []
-  include_ext = ["go", "tpl", "tmpl", "templ", "html"]
+  include_ext = ["go", "tpl", "tmpl", "templ", "html", "sql"]
   kill_delay = "0s"
   log = "build-errors.log"
   send_interrupt = false

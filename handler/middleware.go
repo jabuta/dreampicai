@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/jabuta/dreampicai/pkg/sb"
 	"github.com/jabuta/dreampicai/types"
 )
@@ -46,19 +47,30 @@ func WithUser(next http.Handler) http.Handler {
 			return
 		}
 
-		sbUserClaims, err := sb.DecodeSBJWT(accessToken.Value)
+		userClaims, err := sb.GetUserClaims(accessToken.Value)
 		if err != nil {
 			next.ServeHTTP(w, r)
 			return
 		}
-		sbUser, ok := sbUserClaims["email"].(string)
-		if !ok {
+		if fmt.Sprint(userClaims.Audience) != "[authenticated]" {
+			accessToken.MaxAge = -1
+			accessToken.Value = ""
+			http.SetCookie(w, accessToken)
+			next.ServeHTTP(w, r)
+			return
+		}
+		userID, err := uuid.Parse(fmt.Sprint(userClaims.Subject))
+		if err != nil {
+			accessToken.MaxAge = -1
+			accessToken.Value = ""
+			http.SetCookie(w, accessToken)
 			next.ServeHTTP(w, r)
 			return
 		}
 
 		ctx := context.WithValue(r.Context(), types.UserContextKey, types.AuthenticatedUser{
-			Email:    sbUser,
+			UserID:   userID,
+			Email:    userClaims.Email,
 			LoggedIn: true,
 		})
 		fmt.Println("from the WithUser middleware")
