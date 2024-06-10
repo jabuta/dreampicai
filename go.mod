@@ -9,6 +9,8 @@ require (
 	github.com/nedpals/supabase-go v0.4.0
 )
 
+require github.com/google/uuid v1.6.0 // indirect
+
 require (
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/google/go-querystring v1.1.0 // indirect
