@@ -9,5 +9,6 @@ const UserContextKey contextKeyType = "user"
 type AuthenticatedUser struct {
 	UserID   uuid.UUID
 	Email    string
+	Username string
 	LoggedIn bool
 }

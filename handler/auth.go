@@ -105,7 +105,6 @@ func HandleLogInCreate(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	setAuthCookie(w, resp.AccessToken, resp.ExpiresIn, time.Now().Add(1*time.Hour))
-	fmt.Println(credentials)
 	redirectCookie, err := r.Cookie("lrd")
 	if err != nil {
 		return hxRedirect(w, r, "/")
@@ -134,17 +133,15 @@ func HandleAuthCallback(w http.ResponseWriter, r *http.Request) error {
 	if len(accessToken) == 0 {
 		return render(r, w, auth.CallbackScript())
 	}
-	accessInfo, err := sb.GetUserClaims(accessToken)
+	accessInfo, err := sb.GetUserClaims(accessToken) //should be part of the decodeUserAcccessToken
 	if err != nil {
 		return err
 	}
-	fmt.Println(accessToken)
 
 	expiration, err := accessInfo.GetExpirationTime()
 	if err != nil {
 		return err
 	}
-	fmt.Printf("%s type - %T", expiration, expiration)
 	setAuthCookie(w, accessToken, 3600, expiration.Time)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 	return nil

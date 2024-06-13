@@ -7,25 +7,33 @@ import (
 	"net/http"
 	"os"
 
+	_ "github.com/lib/pq"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/jabuta/dreampicai/handler"
+	"github.com/jabuta/dreampicai/pkg/db"
 	"github.com/jabuta/dreampicai/pkg/sb"
 
 	"github.com/joho/godotenv"
 )
 
 //go:embed public
-var FS embed.FS
+var fs embed.FS
+
+//go:embed sql/schema/*.sql
+var embedMigrations embed.FS
 
 func main() {
-	if err := initEverything(); err != nil {
+
+	if err := initEverything(embedMigrations); err != nil {
 		log.Fatal(err)
 	}
+	defer db.Conf.PgxConneciton.Close(db.Conf.Ctx)
 
 	router := chi.NewMux()
 	router.Use(handler.WithUser)
 	// router.Get("/path",handler)
-	router.Handle("/*", http.StripPrefix("/", http.FileServer(http.FS(FS))))
+	router.Handle("/*", http.StripPrefix("/", http.FileServer(http.FS(fs))))
 	router.Get("/", handler.MakeHandler(handler.HandleHomeIndex))
 	router.Get("/login", handler.MakeHandler(handler.HandleLogInIndex))
 	router.Get("/login/provider/google", handler.MakeHandler(handler.HandleLogInWithGoogle))
@@ -38,7 +46,7 @@ func main() {
 
 	router.Group(func(auth chi.Router) {
 		auth.Use(handler.WithAuth)
-		auth.Get("/settings", handler.MakeHandler(handler.HandleSettingsIndex))
+		auth.Get("/account", handler.MakeHandler(handler.HandleAccountIndex))
 	})
 
 	port := os.Getenv("HTTP_LISTEN_ADDR")
@@ -47,9 +55,15 @@ func main() {
 	log.Fatal(http.ListenAndServe(port, router))
 }
 
-func initEverything() error {
+func initEverything(migrations embed.FS) error {
 	if err := godotenv.Load(); err != nil {
 		return err
 	}
-	return sb.Init()
+	if err := db.InitDatabase(migrations); err != nil {
+		return err
+	}
+	if err := sb.Init(); err != nil {
+		return err
+	}
+	return nil
 }

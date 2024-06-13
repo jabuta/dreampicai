@@ -19,7 +19,18 @@ func Init() error {
 	return nil
 }
 
-//parse supabase user claims
+// parse supabase user claims
+func encodeSBJWT(claims jwt.Claims) (string, error) {
+	jwtSecret := os.Getenv("SUPABASE_JWT_SECRET")
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString([]byte(jwtSecret))
+
+	if err != nil {
+		return "", err
+	}
+	return tokenString, nil
+}
 
 func decodeSBJWT(tokenString string, claims jwt.Claims) error {
 	jwtSecret := os.Getenv("SUPABASE_JWT_SECRET")
@@ -43,6 +54,7 @@ func decodeSBJWT(tokenString string, claims jwt.Claims) error {
 
 type userAccessToken struct {
 	Email       string `json:"email"`
+	Username    string `json:"username"`
 	AppMetadata struct {
 		Provider string `json:"provider"`
 	} `json:"app_metadata"`
@@ -51,10 +63,19 @@ type userAccessToken struct {
 	jwt.RegisteredClaims
 }
 
-func GetUserClaims(authToken string) (*userAccessToken, error) {
+func GetUserClaims(authToken string) (userAccessToken, error) {
 	userClaims := &userAccessToken{}
 	if err := decodeSBJWT(authToken, userClaims); err != nil {
-		return nil, err
+		return *userClaims, err
 	}
-	return userClaims, nil
+	return *userClaims, nil
+}
+
+func SetUserClaims(authToken, username string) (string, error) {
+	userClaims := &userAccessToken{}
+	if err := decodeSBJWT(authToken, userClaims); err != nil {
+		return "", err
+	}
+	userClaims.Username = username
+	return encodeSBJWT(userClaims)
 }

@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/google/uuid"
-	"github.com/jabuta/dreampicai/pkg/sb"
+	"github.com/jabuta/dreampicai/pkg/db"
 	"github.com/jabuta/dreampicai/types"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 func WithAuth(next http.Handler) http.Handler {
@@ -41,40 +41,43 @@ func WithUser(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 			return
 		}
+
+		//no idea how much of this logic needs to go somewhere else, but it is not here
+
 		accessToken, err := r.Cookie("at")
-		if err != nil {
+		if err != nil || r.URL.Path == "/log-out" {
 			next.ServeHTTP(w, r)
 			return
 		}
 
-		userClaims, err := sb.GetUserClaims(accessToken.Value)
+		authedUser, err := decodeUserAccessToken(accessToken.Value)
 		if err != nil {
+			http.Redirect(w, r, "/log-out", http.StatusForbidden)
 			next.ServeHTTP(w, r)
 			return
 		}
-		if fmt.Sprint(userClaims.Audience) != "[authenticated]" {
-			accessToken.MaxAge = -1
-			accessToken.Value = ""
-			http.SetCookie(w, accessToken)
-			next.ServeHTTP(w, r)
-			return
-		}
-		userID, err := uuid.Parse(fmt.Sprint(userClaims.Subject))
-		if err != nil {
-			accessToken.MaxAge = -1
-			accessToken.Value = ""
-			http.SetCookie(w, accessToken)
-			next.ServeHTTP(w, r)
-			return
+		fmt.Println("somestuff", authedUser.Username == "")
+		if authedUser.Username == "" {
+			authedUser.Username, err = getUserNameByID(r, authedUser)
+			if err != nil && r.URL.Path != "/account" {
+				ctx := context.WithValue(r.Context(), types.UserContextKey, authedUser)
+				fmt.Println("from the WithUser middleware")
+				http.Redirect(w, r.WithContext(ctx), "/account", http.StatusSeeOther)
+				return
+			}
 		}
 
-		ctx := context.WithValue(r.Context(), types.UserContextKey, types.AuthenticatedUser{
-			UserID:   userID,
-			Email:    userClaims.Email,
-			LoggedIn: true,
-		})
+		ctx := context.WithValue(r.Context(), types.UserContextKey, authedUser)
 		fmt.Println("from the WithUser middleware")
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 
+}
+
+func getUserNameByID(r *http.Request, user types.AuthenticatedUser) (string, error) {
+	userAccount, err := db.Conf.DB.GetUser(r.Context(), pgtype.UUID{Bytes: user.UserID, Valid: true})
+	if err != nil {
+		return "", err
+	}
+	return userAccount.Username, nil
 }
