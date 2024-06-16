@@ -2,13 +2,29 @@ package handler
 
 import (
 	"fmt"
+	"log"
 	"log/slog"
 	"net/http"
 
+	"github.com/a-h/templ"
 	"github.com/google/uuid"
 	"github.com/jabuta/dreampicai/pkg/sb"
 	"github.com/jabuta/dreampicai/types"
+	"github.com/jabuta/dreampicai/view/systemerror"
 )
+
+func handleError(w http.ResponseWriter, r *http.Request, httpStatus int, callbackError error) {
+	log.Println(callbackError)
+	w.WriteHeader(httpStatus)
+	err := render(r, w, systemerror.ErrorPage(httpStatus))
+	if err != nil {
+		http.Error(w, "The error function errored", http.StatusInternalServerError)
+	}
+}
+
+func render(r *http.Request, w http.ResponseWriter, component templ.Component) error {
+	return component.Render(r.Context(), w)
+}
 
 func decodeUserAccessToken(token string) (types.AuthenticatedUser, error) {
 	userClaims, err := sb.GetUserClaims(token)

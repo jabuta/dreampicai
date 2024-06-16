@@ -2,31 +2,65 @@ package account
 
 import (
 	"github.com/jabuta/dreampicai/view/layout"
-	"github.com/jabuta/dreampicai/types"
+	"github.com/jabuta/dreampicai/view"
 )
 
-templ Index(user types.AuthenticatedUser) {
+type AccountParams struct{
+	Username string
+}
+
+type AccountErrors struct{
+	Username string
+}
+
+
+templ UpdateResponse() {
+	<div class="card-body">
+		<h2 class="card-title">Update</h2>
+		<p>Click the button to go back to your account page</p>
+		<p><a class="btn-primary" href="/account">Account Page</a></p>
+	</div>
+}
+
+
+templ AccountForm(params AccountParams, errors AccountErrors, updateSuccess bool) {
+	<form
+		hx-post="/account"
+		hx-swap="outerHTML"
+		class="card-body"
+	>	
+		<h2>Update your account info for { view.AuthenticatedUser(ctx).Email }</h2>
+		<div class="form-control">
+			<label class="label">
+				<span class="label-text">Username</span>
+			</label>
+			<input type="username" name="username" placeholder="Enter your username" value={ params.Username } class="input input-bordered" required/>
+			if len(errors.Username) > 0 {
+				<div class="form from-error-content">{ errors.Username }</div>
+			}
+		</div>
+		<div class="form-control mt-6">
+			<button class="btn btn-primary">Update</button>
+		</div>
+		if errors != (AccountErrors{}) {
+			<div class="from-error-content">Update failed</div>
+		} else if updateSuccess && errors == (AccountErrors{}) {
+			<div class="from-success-content">Update succeeded</div>
+		}
+	</form>
+}
+
+templ Index() {
 	@layout.App(true)
 	<!-- component -->
 	<div class="flex items-center justify-center min-h-screen">
 		<div class="card w-96 bg-base-100 shadow-xl self-center">
 			<div class="card-body">
-				<h2>Update your account info for { user.Email }</h2>
-				<form
-					hx-post="/signup"
-					hx-swap="outerHTML"
-					class="card-body"
-				>
-					<div class="form-control">
-						<label class="label">
-							<span class="label-text">Username</span>
-						</label>
-						<input type="username" name="username" placeholder={ user.Username } class="input input-bordered" required/>
-					</div>
-					<div class="form-control mt-6">
-						<button class="btn btn-primary">Update</button>
-					</div>
-				</form>
+				@AccountForm(AccountParams{
+						Username: view.AuthenticatedUser(ctx).Username,
+					},
+					AccountErrors{},
+					false)
 			</div>
 		</div>
 	</div>

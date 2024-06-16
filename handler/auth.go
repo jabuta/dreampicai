@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/a-h/templ"
 	"github.com/jabuta/dreampicai/pkg/sb"
 	"github.com/jabuta/dreampicai/pkg/validate"
 	"github.com/jabuta/dreampicai/view/auth"
@@ -51,7 +50,7 @@ func HandleSignupCreate(w http.ResponseWriter, r *http.Request) error {
 	}
 	signupErrors := auth.SignupErrors{}
 	if ok := validate.New(params, validate.Fields{
-		"Email":           validate.Rules(validate.Min(2), validate.Max(50)),
+		"Email":           validate.Rules(validate.Min(2), validate.Max(50), validate.Email),
 		"Password":        validate.Rules(validate.Password),
 		"ConfirmPassword": validate.Rules(validate.Equal(params.Password)),
 	}).Validate(&signupErrors); !ok {
@@ -167,10 +166,6 @@ func HandleAuthCallbackPKCE(w http.ResponseWriter, r *http.Request) error {
 	setAuthCookie(w, accessToken.AccessToken, accessToken.ExpiresIn, time.Now().Add(1*time.Hour))
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 	return nil
-}
-
-func render(r *http.Request, w http.ResponseWriter, component templ.Component) error {
-	return component.Render(r.Context(), w)
 }
 
 func setAuthCookie(w http.ResponseWriter, accessToken string, maxAge int, expires time.Time) {

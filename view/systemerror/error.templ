@@ -1,0 +1,13 @@
+package systemerror
+
+import (
+    "github.com/jabuta/dreampicai/view/layout"
+    "net/http"
+    "strconv"
+)
+
+templ ErrorPage(status int) {
+    @layout.App(true){
+        <div class="text-5xl text-primary">Error {strconv.Itoa(status)} - {http.StatusText(status)}</div>
+    }
+}

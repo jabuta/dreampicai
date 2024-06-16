@@ -2,12 +2,14 @@ package handler
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/jabuta/dreampicai/pkg/db"
 	"github.com/jabuta/dreampicai/types"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -35,6 +37,7 @@ func WithAuth(next http.Handler) http.Handler {
 
 }
 
+// this is dogshit, neet to do better someday
 func WithUser(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if strings.Contains(r.URL.Path, "/public") {
@@ -42,10 +45,14 @@ func WithUser(next http.Handler) http.Handler {
 			return
 		}
 
-		//no idea how much of this logic needs to go somewhere else, but it is not here
-
 		accessToken, err := r.Cookie("at")
-		if err != nil || r.URL.Path == "/log-out" {
+		if err != nil {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		//necessary for logging out users that dont have an account setup
+		if r.URL.Path == "/log-out" {
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -53,31 +60,31 @@ func WithUser(next http.Handler) http.Handler {
 		authedUser, err := decodeUserAccessToken(accessToken.Value)
 		if err != nil {
 			http.Redirect(w, r, "/log-out", http.StatusForbidden)
-			next.ServeHTTP(w, r)
 			return
 		}
-		fmt.Println("somestuff", authedUser.Username == "")
+
+		//check if the account is setup
 		if authedUser.Username == "" {
-			authedUser.Username, err = getUserNameByID(r, authedUser)
-			if err != nil && r.URL.Path != "/account" {
+			userAccount, err := db.Conf.DB.GetUser(r.Context(), pgtype.UUID{
+				Bytes: authedUser.UserID,
+				Valid: true,
+			})
+			if errors.Is(err, pgx.ErrNoRows) && r.URL.Path != "/account" {
 				ctx := context.WithValue(r.Context(), types.UserContextKey, authedUser)
-				fmt.Println("from the WithUser middleware")
+				fmt.Println("from the WithUser middleware - no account setup")
 				http.Redirect(w, r.WithContext(ctx), "/account", http.StatusSeeOther)
 				return
+			} else if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+				fmt.Println("from the WithUser middleware - database read error")
+				ctx := context.WithValue(r.Context(), types.UserContextKey, authedUser)
+				handleError(w, r.WithContext(ctx), http.StatusInternalServerError, err)
+				return
 			}
+			authedUser.Username = userAccount.Username
 		}
-
-		ctx := context.WithValue(r.Context(), types.UserContextKey, authedUser)
 		fmt.Println("from the WithUser middleware")
+		ctx := context.WithValue(r.Context(), types.UserContextKey, authedUser)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 
-}
-
-func getUserNameByID(r *http.Request, user types.AuthenticatedUser) (string, error) {
-	userAccount, err := db.Conf.DB.GetUser(r.Context(), pgtype.UUID{Bytes: user.UserID, Valid: true})
-	if err != nil {
-		return "", err
-	}
-	return userAccount.Username, nil
 }
